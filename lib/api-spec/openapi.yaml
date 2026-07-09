@@ -10,6 +10,10 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: clients
+    description: Client (lead) operations
+  - name: interactions
+    description: Client interaction log operations
 paths:
   /healthz:
     get:
@@ -24,6 +28,258 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /clients:
+    get:
+      operationId: listClients
+      tags: [clients]
+      summary: List clients
+      description: Lists clients, optionally filtered by status, ordered by dynamic priority score
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/ClientStatusFilter"
+      responses:
+        "200":
+          description: List of clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Client"
+    post:
+      operationId: createClient
+      tags: [clients]
+      summary: Create a client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientInput"
+      responses:
+        "201":
+          description: Created client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+
+  /clients/summary:
+    get:
+      operationId: getClientsSummary
+      tags: [clients]
+      summary: Aggregate counts and stats across all clients
+      responses:
+        "200":
+          description: Summary stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientsSummary"
+
+  /clients/{id}:
+    get:
+      operationId: getClient
+      tags: [clients]
+      summary: Get a client by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateClient
+      tags: [clients]
+      summary: Update a client
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClientUpdate"
+      responses:
+        "200":
+          description: Updated client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteClient
+      tags: [clients]
+      summary: Delete a client and all related interactions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /clients/{id}/mark-sold:
+    post:
+      operationId: markClientSold
+      tags: [clients]
+      summary: Mark a client as sold
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "404":
+          description: Not found
+
+  /clients/{id}/mark-lost:
+    post:
+      operationId: markClientLost
+      tags: [clients]
+      summary: Mark a client as lost
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "404":
+          description: Not found
+
+  /clients/{id}/regenerate-suggestion:
+    post:
+      operationId: regenerateSuggestion
+      tags: [clients]
+      summary: Recompute the rule-based AI suggestion for a client
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated client with fresh AI fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "404":
+          description: Not found
+
+  /clients/{id}/import-history:
+    post:
+      operationId: importClientHistory
+      tags: [clients]
+      summary: Paste WhatsApp history text, analyze it, and update the client's AI fields
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportHistoryInput"
+      responses:
+        "200":
+          description: Updated client with fresh AI fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "404":
+          description: Not found
+
+  /clients/{id}/interactions:
+    get:
+      operationId: listClientInteractions
+      tags: [interactions]
+      summary: List interactions for a client, most recent first
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of interactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Interaction"
+        "404":
+          description: Not found
+    post:
+      operationId: createClientInteraction
+      tags: [interactions]
+      summary: Register a new interaction for a client, recalculating AI fields
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InteractionInput"
+      responses:
+        "201":
+          description: Updated client with fresh AI fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Client"
+        "404":
+          description: Not found
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +290,168 @@ components:
       required:
         - status
 
+    ClientStatusFilter:
+      type: string
+      enum: [ativo, vendido, perdido, todos]
+
+    ClientStatus:
+      type: string
+      enum: [ativo, vendido, perdido]
+
+    ClientTemperature:
+      type: string
+      enum: [frio, morno, quente]
+
+    ClientPriority:
+      type: string
+      enum: [baixa, media, alta, critica]
+
+    Sentiment:
+      type: string
+      enum: [positivo, neutro, negativo]
+
+    InteractionType:
+      type: string
+      enum: [whatsapp, ligacao, loja, proposta, test_drive, avaliacao, retorno]
+
+    Client:
+      type: object
+      required:
+        - id
+        - name
+        - phone
+        - product
+        - origin
+        - stage
+        - temperature
+        - status
+        - notes
+        - mainObjection
+        - nextAction
+        - suggestedMessage
+        - strategicReason
+        - chancePurchase
+        - riskLoss
+        - priority
+        - priorityScore
+        - lastInteractionAt
+        - createdAt
+        - updatedAt
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        phone: { type: string }
+        product: { type: string }
+        origin: { type: string }
+        stage: { type: string }
+        temperature:
+          $ref: "#/components/schemas/ClientTemperature"
+        status:
+          $ref: "#/components/schemas/ClientStatus"
+        notes: { type: string }
+        mainObjection: { type: string }
+        nextAction: { type: string }
+        suggestedMessage: { type: string }
+        strategicReason: { type: string }
+        chancePurchase: { type: integer, minimum: 0, maximum: 100 }
+        riskLoss: { type: integer, minimum: 0, maximum: 100 }
+        priority:
+          $ref: "#/components/schemas/ClientPriority"
+        priorityScore: { type: number }
+        lastInteractionAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ClientInput:
+      type: object
+      required: [name, phone, product]
+      properties:
+        name: { type: string, minLength: 1 }
+        phone: { type: string, minLength: 1 }
+        product: { type: string }
+        origin: { type: string }
+        stage: { type: string }
+        temperature:
+          $ref: "#/components/schemas/ClientTemperature"
+        notes: { type: string }
+        status:
+          $ref: "#/components/schemas/ClientStatus"
+
+    ClientUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1 }
+        phone: { type: string, minLength: 1 }
+        product: { type: string }
+        origin: { type: string }
+        stage: { type: string }
+        temperature:
+          $ref: "#/components/schemas/ClientTemperature"
+        notes: { type: string }
+        status:
+          $ref: "#/components/schemas/ClientStatus"
+
+    ImportHistoryInput:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          minLength: 1
+
+    Interaction:
+      type: object
+      required:
+        - id
+        - clientId
+        - type
+        - summary
+        - objection
+        - sentiment
+        - createdAt
+      properties:
+        id: { type: integer }
+        clientId: { type: integer }
+        type:
+          $ref: "#/components/schemas/InteractionType"
+        summary: { type: string }
+        objection: { type: string }
+        sentiment:
+          $ref: "#/components/schemas/Sentiment"
+        createdAt:
+          type: string
+          format: date-time
+
+    InteractionInput:
+      type: object
+      required: [type, summary, sentiment]
+      properties:
+        type:
+          $ref: "#/components/schemas/InteractionType"
+        summary: { type: string, minLength: 1 }
+        objection: { type: string }
+        sentiment:
+          $ref: "#/components/schemas/Sentiment"
+
+    ClientsSummary:
+      type: object
+      required:
+        - totalActive
+        - totalSold
+        - totalLost
+        - criticalCount
+        - highChanceCount
+        - contactedTodayCount
+      properties:
+        totalActive: { type: integer }
+        totalSold: { type: integer }
+        totalLost: { type: integer }
+        criticalCount: { type: integer }
+        highChanceCount: { type: integer }
+        contactedTodayCount: { type: integer }

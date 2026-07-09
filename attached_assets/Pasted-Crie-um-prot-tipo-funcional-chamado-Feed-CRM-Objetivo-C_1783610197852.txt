@@ -1,0 +1,255 @@
+Crie um protótipo funcional chamado Feed CRM.
+
+Objetivo:
+Criar um CRM mobile-first em formato de feed vertical, inspirado em redes sociais de vídeos curtos, para vendedores acompanharem clientes, receberem sugestão de próxima ação e executarem contato rápido via WhatsApp.
+
+O app deve funcionar como protótipo navegável e testável, priorizando velocidade, visual premium e usabilidade no celular.
+
+IMPORTANTE:
+- Não criar dashboard complexo.
+- Não criar financeiro.
+- Não criar estoque.
+- Não criar múltiplos usuários nesta versão.
+- Manter tudo simples, direto e funcional.
+
+TECNOLOGIA:
+Use uma stack simples para rodar no Replit:
+- Frontend moderno responsivo
+- Backend simples
+- Banco local simples, pode ser SQLite ou JSON persistente
+- Se possível, usar React
+- O app deve funcionar bem no navegador mobile
+- Preparar como PWA instalável, com manifest, ícone, modo standalone e service worker básico
+
+DESIGN:
+- Mobile-first
+- Fundo escuro
+- Visual premium, moderno e elegante
+- Cards grandes em tela quase cheia
+- Feed vertical rolável
+- Botões laterais fixos no estilo rede social
+- Poucos menus
+- Ações rápidas em um clique
+- Interface em português do Brasil
+
+TELA PRINCIPAL — FEED:
+Criar um feed vertical de clientes.
+
+Cada card deve mostrar:
+- Nome do cliente
+- Telefone
+- Produto de interesse
+- Etapa atual
+- Status: ativo, vendido ou perdido
+- Temperatura: frio, morno ou quente
+- Última interação
+- Tempo sem contato: exemplo “3 dias sem contato”
+- Chance de compra em %
+- Risco de perda em %
+- Prioridade: baixa, média, alta ou crítica
+- Objeção principal
+- Próxima ação recomendada
+- Mensagem sugerida para WhatsApp
+
+Botões laterais no card:
+- WhatsApp
+- Ligar
+- Registrar interação
+- Gerar nova sugestão IA
+- Editar cliente
+- Marcar como vendido
+- Marcar como perdido
+- Excluir cliente
+
+Abas/filtros superiores:
+- Ativos
+- Vendidos
+- Perdidos
+- Todos
+
+CADASTRO DE CLIENTE:
+Criar botão “+” para novo cliente.
+
+Campos:
+- Nome
+- Telefone
+- Produto de interesse
+- Origem do lead
+- Etapa atual
+- Temperatura
+- Observações
+- Status
+
+EDIÇÃO DE CLIENTE:
+Permitir editar cliente existente.
+
+Campos editáveis:
+- Nome
+- Telefone
+- Produto de interesse
+- Origem
+- Etapa atual
+- Temperatura
+- Observações
+- Status
+
+A edição deve atualizar o cliente existente, não criar outro.
+
+EXCLUSÃO DE CLIENTE:
+Adicionar exclusão definitiva.
+
+Requisitos:
+- Botão excluir
+- Modal de confirmação: “Tem certeza que deseja excluir este cliente?”
+- Se confirmado, apagar cliente, interações e sugestões vinculadas
+
+REGISTRAR INTERAÇÃO:
+Criar tela/modal de nova interação.
+
+Campos:
+- Tipo: WhatsApp, ligação, loja, proposta, test drive, avaliação, retorno
+- Resumo
+- Objeção principal
+- Sentimento percebido: positivo, neutro, negativo
+- Data automática
+
+Ao salvar:
+- vincular ao cliente correto
+- atualizar última interação do cliente
+- atualizar objeção principal do cliente
+- recalcular chance, risco, prioridade e próxima ação
+- voltar para o card
+
+IMPORTAR HISTÓRICO:
+Criar função “Importar histórico”.
+
+Fluxo:
+- botão “Importar histórico”
+- abrir modal com campo grande de texto
+- usuário cola manualmente trechos da conversa do WhatsApp
+- ao salvar, guardar no histórico do cliente
+- analisar o texto e gerar:
+  - resumo
+  - objeção principal
+  - temperatura
+  - chance de compra
+  - risco de perda
+  - próxima ação
+  - mensagem sugerida para WhatsApp
+
+Não tentar acessar WhatsApp automaticamente.
+Não tentar ler mensagens do celular.
+A importação é manual por copiar e colar.
+
+WHATSAPP:
+Botão WhatsApp deve abrir:
+https://wa.me/55NUMERO?text=MENSAGEM
+
+Regras:
+- limpar máscara do telefone
+- adicionar código 55 se não existir
+- codificar mensagem corretamente
+- usar a mensagem sugerida do cliente
+
+BOTÃO LIGAR:
+Abrir:
+tel:NUMERO
+
+LÓGICA DE IA / SIMULAÇÃO:
+Nesta primeira versão, se não houver API de IA configurada, criar uma lógica local baseada em regras.
+
+A função deve analisar:
+- etapa do cliente
+- tempo sem contato
+- temperatura
+- histórico/interações
+- objeção principal
+- sentimento percebido
+
+E retornar:
+- chance_compra de 0 a 100
+- risco_perda de 0 a 100
+- prioridade: baixa, média, alta ou crítica
+- próxima ação recomendada
+- mensagem curta para WhatsApp
+- motivo estratégico
+
+Regras exemplo:
+- Test drive feito + mais de 2 dias sem contato = prioridade alta
+- Proposta enviada + mais de 3 dias sem contato = risco alto
+- Avaliação entregue + cliente sumido = risco crítico
+- Sentimento positivo = aumenta chance
+- Sentimento negativo = aumenta risco
+- Cliente quente = aumenta chance
+- Cliente frio = reduz chance
+- Objeção “preço”, “parcela” ou “avaliação” = criar mensagem consultiva, sem pressão
+- Objeção “distância” = sugerir facilitar atendimento remoto ou agendamento objetivo
+- Objeção “concorrência” = reforçar diferencial sem atacar concorrente
+
+ORDENAÇÃO DO FEED:
+Ordenar clientes por prioridade dinâmica, não apenas por data.
+
+Fórmula sugerida:
+prioridade_score = chance_compra * risco_perda * dias_sem_contato
+
+Os clientes mais críticos e com maior chance devem aparecer primeiro.
+
+TEMPO SEM CONTATO:
+Mostrar indicador forte:
+- “Hoje”
+- “1 dia sem contato”
+- “3 dias sem contato”
+- “7 dias sem contato”
+
+Cores:
+- verde = recente
+- amarelo = atenção
+- vermelho = urgente
+
+DADOS DE EXEMPLO:
+Criar pelo menos 12 clientes fictícios de concessionária.
+
+Exemplos de etapas:
+- Lead novo
+- Proposta enviada
+- Test drive feito
+- Avaliação entregue
+- Cliente sumido
+- Cliente quente
+- Em negociação
+- Perdido
+- Vendido
+
+Usar exemplos com veículos:
+- CS75
+- UNI-T
+- Hyundai Creta
+- Honda Civic usado
+- Audi A4 2018
+- BYD Song
+- Jeep Compass
+- Corolla Cross
+
+PWA:
+Preparar o app para instalação no celular:
+- manifest.json
+- nome: Feed CRM
+- short_name: Feed CRM
+- theme_color escuro
+- background_color preto
+- display: standalone
+- ícone simples com fundo escuro e raio
+- service worker básico
+
+EXPERIÊNCIA:
+O fluxo principal precisa ser:
+abrir app → rolar feed → ver cliente → entender risco/chance → clicar WhatsApp → registrar retorno.
+
+Isso precisa ser rápido, limpo e viciante.
+
+IMPORTANTE FINAL:
+Depois de criar, explique:
+1. Como rodar no Replit
+2. Onde ficam os dados
+3. Como testar o PWA
+4. Como alterar a lógica de IA futuramente para usar OpenAI ou Claude API

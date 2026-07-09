@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Feed CRM"
+version = "1.0.0"
+id = "artifacts/feed-crm"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19249
+
+[services.development]
+run = "pnpm --filter @workspace/feed-crm run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/feed-crm", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/feed-crm/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19249"
+BASE_PATH = "/"
