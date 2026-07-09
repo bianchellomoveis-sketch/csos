@@ -60,7 +60,7 @@ export function ImportHistorySheet({ open, onOpenChange, client }: ImportHistory
               Importar WhatsApp
             </SheetTitle>
             <SheetDescription>
-              Cole o histórico da conversa com {client?.name}. A inteligência artificial irá ler, resumir, extrair objeções e atualizar a estratégia.
+              Cole o histórico da conversa com {client?.name}. O Assistente Inteligente irá ler, resumir, extrair objeções e atualizar a estratégia.
             </SheetDescription>
           </SheetHeader>
         </div>
@@ -71,7 +71,7 @@ export function ImportHistorySheet({ open, onOpenChange, client }: ImportHistory
               
               <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 mb-2 flex gap-3 text-sm text-primary-foreground items-start">
                 <Sparkles className="h-5 w-5 text-primary shrink-0" />
-                <p>Nossa IA analisará o texto e atualizará a etapa do funil, temperatura, objeções e chance de compra automaticamente.</p>
+                <p>O Assistente Inteligente analisará o texto (com regras locais) e atualizará temperatura, objeções e chance de compra automaticamente.</p>
               </div>
 
               <FormField
@@ -102,7 +102,7 @@ export function ImportHistorySheet({ open, onOpenChange, client }: ImportHistory
             className="w-full font-bold h-14 rounded-xl text-lg shadow-lg shadow-primary/20" 
             disabled={isPending}
           >
-            {isPending ? "Analisando com IA..." : "Extrair Informações com IA"}
+            {isPending ? "Analisando..." : "Gerar sugestão"}
           </Button>
         </div>
       </SheetContent>

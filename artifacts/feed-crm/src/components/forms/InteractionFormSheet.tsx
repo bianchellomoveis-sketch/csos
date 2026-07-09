@@ -73,7 +73,7 @@ export function InteractionFormSheet({ open, onOpenChange, client }: Interaction
               Registrar Interação
             </SheetTitle>
             <SheetDescription>
-              A IA recalculará a prioridade e próxima ação do {client?.name} baseada nesta interação.
+              O Assistente Inteligente recalculará a prioridade e próxima ação do {client?.name} baseada nesta interação.
             </SheetDescription>
           </SheetHeader>
         </div>
@@ -182,7 +182,7 @@ export function InteractionFormSheet({ open, onOpenChange, client }: Interaction
             className="w-full font-bold h-14 rounded-xl text-lg shadow-lg shadow-primary/20" 
             disabled={isPending}
           >
-            {isPending ? "Processando..." : "Salvar e Atualizar IA"}
+            {isPending ? "Salvando..." : "Salvar Interação"}
           </Button>
         </div>
       </SheetContent>

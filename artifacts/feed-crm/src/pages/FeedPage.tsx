@@ -5,6 +5,8 @@ import { ClientFormSheet } from "@/components/forms/ClientFormSheet";
 import { InteractionFormSheet } from "@/components/forms/InteractionFormSheet";
 import { ImportHistorySheet } from "@/components/forms/ImportHistorySheet";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { ClientDetailsSheet } from "@/components/ClientDetailsSheet";
+import { InteractionHistorySheet } from "@/components/InteractionHistorySheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Plus, UserX } from "lucide-react";
@@ -19,6 +21,8 @@ export default function FeedPage() {
   const [interactionOpen, setInteractionOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   
   const [activeClient, setActiveClient] = useState<Client | null>(null);
 
@@ -48,6 +52,16 @@ export default function FeedPage() {
   const handleDelete = (client: Client) => {
     setActiveClient(client);
     setDeleteOpen(true);
+  };
+
+  const handleViewDetails = (client: Client) => {
+    setActiveClient(client);
+    setDetailsOpen(true);
+  };
+
+  const handleViewHistory = (client: Client) => {
+    setActiveClient(client);
+    setHistoryOpen(true);
   };
 
   // Setup observer elements for feed cards to detect which one is mostly visible
@@ -130,6 +144,8 @@ export default function FeedPage() {
                   onRegisterInteraction={handleInteraction}
                   onImportHistory={handleImport}
                   onDelete={handleDelete}
+                  onViewDetails={handleViewDetails}
+                  onViewHistory={handleViewHistory}
                   isActive={visibleCardId === client.id}
                 />
               </FeedCardWrapper>
@@ -173,6 +189,16 @@ export default function FeedPage() {
         open={deleteOpen} 
         onOpenChange={setDeleteOpen} 
         client={activeClient} 
+      />
+      <ClientDetailsSheet
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+        client={activeClient}
+      />
+      <InteractionHistorySheet
+        open={historyOpen}
+        onOpenChange={setHistoryOpen}
+        client={activeClient}
       />
     </div>
   );

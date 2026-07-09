@@ -93,7 +93,7 @@ export function useClientMutations() {
   const regenerateSuggestion = useRegenerateSuggestion({
     mutation: {
       onSuccess: (data) => {
-        toast({ title: "Sugestão atualizada", description: "A inteligência artificial gerou uma nova recomendação." });
+        toast({ title: "Sugestão atualizada", description: "O Assistente Inteligente recalculou chance, risco, prioridade e mensagem." });
         invalidateClient(data.id);
       },
       onError: () => {
@@ -105,7 +105,7 @@ export function useClientMutations() {
   const importHistory = useImportClientHistory({
     mutation: {
       onSuccess: (data) => {
-        toast({ title: "Histórico importado", description: "O contexto do cliente foi atualizado com IA." });
+        toast({ title: "Histórico importado", description: "O contexto do cliente foi atualizado pelo Assistente Inteligente." });
         invalidateClient(data.id);
       },
       onError: () => {
@@ -117,7 +117,7 @@ export function useClientMutations() {
   const createInteraction = useCreateClientInteraction({
     mutation: {
       onSuccess: (_, variables) => {
-        toast({ title: "Interação registrada", description: "O contato foi salvo e a estratégia atualizada." });
+        toast({ title: "Interação salva com sucesso", description: "Histórico, última interação e estratégia foram atualizados." });
         // The API recalculates fields on the client, so we must invalidate the client to fetch those new fields
         invalidateClient(variables.id);
         queryClient.invalidateQueries({ queryKey: getListClientInteractionsQueryKey(variables.id) });

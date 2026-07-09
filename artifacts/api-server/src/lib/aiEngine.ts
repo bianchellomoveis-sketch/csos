@@ -45,8 +45,9 @@ export function computeAiFields(
   const days = daysSince(new Date(client.lastInteractionAt));
   const stage = client.stage.toLowerCase();
   const latest = interactions[0];
-  const objection = (latest?.objection || client.mainObjection || "").trim();
-  const sentiment = latest?.sentiment ?? "neutro";
+  const notesSignal = analyzeImportedText(client.notes || "");
+  const objection = (latest?.objection || client.mainObjection || notesSignal.objection || "").trim();
+  const sentiment = latest?.sentiment ?? notesSignal.sentiment;
 
   let chance = 50;
   let risk = 30;

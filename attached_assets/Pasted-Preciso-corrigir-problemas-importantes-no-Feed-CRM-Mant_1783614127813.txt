@@ -1,0 +1,69 @@
+Preciso corrigir problemas importantes no Feed CRM.
+
+Mantenha o layout escuro e todas as funções atuais, mas faça os ajustes abaixo:
+
+1. Corrigir rolagem do feed
+O card está com muita informação e a área da mensagem da IA está atrapalhando a rolagem vertical para o próximo cliente.
+Quero que o feed funcione como rede social: ao rolar, deve ir facilmente para o próximo cliente.
+A mensagem da IA não deve criar uma rolagem interna grande.
+Solução:
+- reduzir a altura da caixa da mensagem sugerida
+- mostrar apenas 2 linhas da mensagem
+- adicionar botão “Ver mensagem completa”
+- remover qualquer scroll interno dentro do card
+- deixar o card mais compacto e fluido
+
+2. Registrar interação com confirmação e histórico
+Ao salvar uma interação:
+- mostrar mensagem “Interação salva com sucesso”
+- salvar a interação no histórico do cliente
+- atualizar a última interação
+- atualizar o tempo sem contato
+- atualizar objeção principal se preenchida
+- permitir visualizar o histórico do cliente em um botão “Histórico”
+
+3. Corrigir atualização da IA
+O botão de atualizar IA não está mudando a sugestão.
+Ao clicar em atualizar IA:
+- recalcular chance de venda
+- recalcular risco de perda
+- recalcular prioridade
+- gerar nova ação recomendada
+- gerar nova mensagem WhatsApp
+- usar as observações e interações salvas como contexto
+- mostrar loading enquanto atualiza
+- mostrar confirmação quando concluir
+
+4. Deixar claro se é IA real ou lógica local
+Se não existir API de IA configurada, renomear visualmente para:
+“Assistente Inteligente”
+em vez de “IA”.
+Mas manter o botão “Gerar sugestão”.
+A lógica deve usar regras locais baseadas em:
+- etapa
+- temperatura
+- tempo sem contato
+- objeção principal
+- sentimento
+- histórico
+
+5. Melhorar card principal
+Quero o card mais parecido com um feed vertical:
+- menos texto visível
+- mais espaço para rolagem
+- botão WhatsApp bem destacado
+- botão Registrar interação acessível
+- botão Ver detalhes para abrir informações completas
+- imagem de fundo sutil de carro, escurecida, sem prejudicar leitura
+
+6. Não quebrar:
+- cadastro de cliente
+- botão WhatsApp
+- botão ligar
+- filtros Ativos/Vendidos/Perdidos/Todos
+- editar cliente
+- excluir cliente
+- PWA
+- deploy atual
+
+Depois explique exatamente o que foi corrigido.
