@@ -74,6 +74,16 @@ export function InteractionHistorySheet({ open, onOpenChange, client }: Interact
                   {interaction.objection && (
                     <p className="text-xs text-destructive/90 mb-2">Objeção: {interaction.objection}</p>
                   )}
+                  {interaction.notes && (
+                    <p className="text-xs text-foreground/70 mb-2">Obs: {interaction.notes}</p>
+                  )}
+                  {(interaction.proposalSent || interaction.evaluationDone || interaction.testDriveDone) && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {interaction.proposalSent && <Badge variant="outline" className="text-[10px]">Proposta enviada</Badge>}
+                      {interaction.evaluationDone && <Badge variant="outline" className="text-[10px]">Avaliação feita</Badge>}
+                      {interaction.testDriveDone && <Badge variant="outline" className="text-[10px]">Test drive feito</Badge>}
+                    </div>
+                  )}
                   <p className="text-xs text-muted-foreground">{formatTimeAgo(interaction.createdAt)}</p>
                 </div>
               );

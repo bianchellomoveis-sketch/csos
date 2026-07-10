@@ -8,15 +8,24 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useClientMutations } from "@/hooks/use-client-mutations";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { BrainCircuit } from "lucide-react";
+import { BrainCircuit, ChevronDown } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const interactionSchema = z.object({
   type: z.enum(["whatsapp", "ligacao", "loja", "proposta", "test_drive", "avaliacao", "retorno"] as const),
   summary: z.string().min(1, "O resumo é obrigatório"),
   objection: z.string().optional(),
   sentiment: z.enum(["positivo", "neutro", "negativo"] as const),
+  notes: z.string().optional(),
+  proposalSent: z.boolean().optional(),
+  evaluationDone: z.boolean().optional(),
+  testDriveDone: z.boolean().optional(),
+  messageSent: z.string().optional(),
+  clientResponse: z.string().optional(),
+  importantChanges: z.string().optional(),
 });
 
 type InteractionFormValues = z.infer<typeof interactionSchema>;
@@ -27,8 +36,19 @@ interface InteractionFormSheetProps {
   client: Client | null;
 }
 
+const emptyDetails = {
+  notes: "",
+  proposalSent: false,
+  evaluationDone: false,
+  testDriveDone: false,
+  messageSent: "",
+  clientResponse: "",
+  importantChanges: "",
+};
+
 export function InteractionFormSheet({ open, onOpenChange, client }: InteractionFormSheetProps) {
   const { createInteraction } = useClientMutations();
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const form = useForm<InteractionFormValues>({
     resolver: zodResolver(interactionSchema),
@@ -37,6 +57,7 @@ export function InteractionFormSheet({ open, onOpenChange, client }: Interaction
       summary: "",
       objection: "",
       sentiment: "neutro",
+      ...emptyDetails,
     },
   });
 
@@ -47,7 +68,9 @@ export function InteractionFormSheet({ open, onOpenChange, client }: Interaction
         summary: "",
         objection: "",
         sentiment: "neutro",
+        ...emptyDetails,
       });
+      setDetailsOpen(false);
     }
   }, [open, form]);
 
@@ -170,7 +193,130 @@ export function InteractionFormSheet({ open, onOpenChange, client }: Interaction
                   </FormItem>
                 )}
               />
-              
+
+              <Collapsible open={detailsOpen} onOpenChange={setDetailsOpen}>
+                <CollapsibleTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex items-center justify-between w-full text-sm font-semibold text-muted-foreground hover:text-foreground py-1"
+                  >
+                    Mais detalhes (opcional)
+                    <ChevronDown className={`h-4 w-4 transition-transform ${detailsOpen ? "rotate-180" : ""}`} />
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-5 pt-4">
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Observações</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Detalhes adicionais sobre a interação..."
+                            className="resize-none bg-card border-card-border min-h-[80px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="messageSent"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mensagem enviada</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Copie aqui a mensagem enviada ao cliente"
+                            className="resize-none bg-card border-card-border min-h-[70px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="clientResponse"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Resposta do cliente</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="O que o cliente respondeu?"
+                            className="resize-none bg-card border-card-border min-h-[70px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="importantChanges"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Alterações importantes</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Ex: mudou de orçamento, novo decisor..."
+                            className="bg-card border-card-border h-12"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex flex-col gap-3">
+                    <FormField
+                      control={form.control}
+                      name="proposalSent"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center gap-2 space-y-0">
+                          <FormControl>
+                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                          <FormLabel className="font-normal">Proposta enviada</FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="evaluationDone"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center gap-2 space-y-0">
+                          <FormControl>
+                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                          <FormLabel className="font-normal">Avaliação realizada</FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="testDriveDone"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center gap-2 space-y-0">
+                          <FormControl>
+                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                          <FormLabel className="font-normal">Test drive realizado</FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             </form>
           </Form>
         </div>

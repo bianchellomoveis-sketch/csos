@@ -23,6 +23,11 @@ export interface Client {
   nextAction: string;
   suggestedMessage: string;
   strategicReason: string;
+  strategy: string;
+  intelligentProfile: string;
+  urgency: string;
+  bestContactTime: string;
+  analysisContext: string[];
   /**
      * @minimum 0
      * @maximum 100

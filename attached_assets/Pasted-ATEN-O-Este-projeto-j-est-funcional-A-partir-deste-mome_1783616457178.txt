@@ -1,0 +1,465 @@
+ATENÇÃO
+
+Este projeto já está funcional.
+
+A partir deste momento ele deve evoluir continuamente.
+
+NÃO recrie o projeto.
+
+NÃO altere o layout atual.
+
+NÃO substituir componentes existentes.
+
+NÃO alterar a experiência de uso.
+
+NÃO remover nenhuma funcionalidade já existente.
+
+NÃO alterar o Feed.
+
+NÃO alterar os botões.
+
+NÃO alterar o cadastro de clientes.
+
+NÃO alterar edição.
+
+NÃO alterar exclusão.
+
+NÃO alterar histórico.
+
+NÃO alterar WhatsApp.
+
+NÃO alterar ligação.
+
+NÃO alterar PWA.
+
+NÃO alterar Deploy.
+
+NÃO modificar a estrutura do projeto.
+
+NÃO recriar arquivos desnecessariamente.
+
+Sempre reutilizar os componentes existentes.
+
+Sempre alterar apenas o necessário.
+
+Meu objetivo é evoluir continuamente o mesmo software.
+
+Quero um desenvolvimento incremental.
+
+========================================================
+
+OBJETIVO DESTA SPRINT
+
+Transformar o Assistente Inteligente em um verdadeiro consultor comercial com memória.
+
+Ainda NÃO integrar OpenAI nem Claude.
+
+Primeiro construir toda a arquitetura.
+
+Depois a integração será apenas trocar uma função.
+
+========================================================
+
+MEMÓRIA DO CLIENTE
+
+Criar uma memória permanente para cada cliente.
+
+Toda interação registrada deve ser armazenada.
+
+Salvar:
+
+• data
+
+• hora
+
+• tipo de contato
+
+• resumo
+
+• objeção principal
+
+• sentimento
+
+• observações
+
+• temperatura
+
+• etapa da negociação
+
+• proposta enviada
+
+• avaliação realizada
+
+• test drive
+
+• mensagens enviadas
+
+• respostas do cliente
+
+• alterações importantes
+
+Nunca apagar informações.
+
+Sempre acrescentar novas.
+
+========================================================
+
+PERFIL INTELIGENTE
+
+Cada cliente deve possuir um perfil atualizado automaticamente.
+
+Criar uma seção chamada
+
+Perfil Inteligente
+
+Exemplo:
+
+Cliente iniciou muito interessado.
+
+Fez test drive.
+
+Gostou do veículo.
+
+Principal objeção continua sendo avaliação do usado.
+
+Costuma responder rapidamente.
+
+Após receber proposta ficou cinco dias sem responder.
+
+Pretende comprar ainda este mês.
+
+========================================================
+
+LINHA DO TEMPO
+
+Criar uma Timeline organizada.
+
+Exemplo:
+
+01/07 Lead criado
+
+02/07 Primeiro WhatsApp
+
+03/07 Test Drive
+
+05/07 Avaliação
+
+06/07 Proposta
+
+09/07 Cliente pediu prazo
+
+14/07 Sem contato
+
+========================================================
+
+GERAR SUGESTÃO
+
+Ao clicar em
+
+Gerar Sugestão
+
+o sistema deve analisar TODO o histórico.
+
+Nunca apenas a última interação.
+
+Considerar:
+
+dias sem contato
+
+frequência
+
+temperatura
+
+objeções recorrentes
+
+histórico completo
+
+sentimento
+
+evolução
+
+estágio
+
+respostas anteriores
+
+========================================================
+
+ANÁLISE COMERCIAL
+
+Gerar automaticamente
+
+Chance de compra
+
+Risco de perda
+
+Prioridade
+
+Urgência
+
+Melhor momento para contato
+
+Estratégia
+
+Próxima ação
+
+Motivo estratégico
+
+========================================================
+
+COMO CHEGUEI NESSA CONCLUSÃO
+
+Adicionar uma seção mostrando exatamente o raciocínio utilizado.
+
+Exemplo
+
+Foram considerados:
+
+• Cliente morno
+
+• 6 dias sem contato
+
+• Test Drive realizado
+
+• Avaliação entregue
+
+• Objeção principal: avaliação do usado
+
+• Sentimento positivo
+
+• Responde rapidamente
+
+========================================================
+
+MENSAGEM INTELIGENTE
+
+A mensagem do WhatsApp deve utilizar todo o histórico.
+
+Nunca repetir mensagens anteriores.
+
+Nunca parecer pronta.
+
+Nunca parecer robótica.
+
+Deve parecer escrita por um vendedor que conhece o cliente.
+
+========================================================
+
+REGISTRAR INTERAÇÃO
+
+Ao salvar:
+
+mostrar confirmação
+
+Interação salva com sucesso.
+
+Salvar imediatamente.
+
+Atualizar:
+
+tempo sem contato
+
+histórico
+
+objeção
+
+temperatura
+
+perfil inteligente
+
+========================================================
+
+BOTÃO HISTÓRICO
+
+Mostrar todas as interações em ordem cronológica.
+
+========================================================
+
+BOTÃO DETALHES
+
+Mostrar:
+
+dados completos
+
+perfil inteligente
+
+timeline
+
+histórico
+
+mensagem sugerida
+
+estratégia
+
+========================================================
+
+SCROLL
+
+O Feed deve continuar extremamente fluido.
+
+Nenhuma área do card pode possuir rolagem própria.
+
+Toda rolagem deve ser apenas do Feed.
+
+O comportamento deve lembrar Instagram, TikTok ou Shorts.
+
+========================================================
+
+ARQUITETURA PARA IA REAL
+
+Criar um serviço isolado.
+
+Nome:
+
+AIService
+
+Criar uma função
+
+generateClientAnalysis(cliente)
+
+Entrada:
+
+dados do cliente
+
+histórico
+
+perfil
+
+interações
+
+temperatura
+
+tempo
+
+objeções
+
+mensagens anteriores
+
+Saída:
+
+chance
+
+risco
+
+prioridade
+
+estratégia
+
+próxima ação
+
+perfil inteligente
+
+mensagem
+
+motivo estratégico
+
+contexto utilizado
+
+Toda a inteligência do sistema deve depender apenas desta função.
+
+========================================================
+
+PREPARAÇÃO PARA API
+
+Criar um Provider de IA.
+
+Nesta versão utilizar:
+
+LocalAIProvider
+
+Mas preparar uma interface para futuramente adicionar:
+
+OpenAIProvider
+
+ClaudeProvider
+
+GeminiProvider
+
+GroqProvider
+
+A arquitetura deve permitir trocar apenas o Provider sem alterar nenhuma outra parte do aplicativo.
+
+========================================================
+
+CONFIGURAÇÃO
+
+Criar um arquivo de configuração.
+
+Exemplo:
+
+AI_PROVIDER=local
+
+OPENAI_API_KEY=
+
+ANTHROPIC_API_KEY=
+
+GEMINI_API_KEY=
+
+GROQ_API_KEY=
+
+Quando existir uma chave válida, utilizar automaticamente o Provider correspondente.
+
+Caso contrário utilizar LocalAIProvider.
+
+========================================================
+
+OBJETIVO FINAL
+
+Quero que, no futuro, eu apenas coloque minha chave de API e o Feed CRM passe imediatamente a utilizar uma IA real.
+
+Sem alterar telas.
+
+Sem alterar layout.
+
+Sem alterar componentes.
+
+Sem alterar experiência do usuário.
+
+========================================================
+
+ANTES DE FINALIZAR
+
+Valide que nada foi quebrado.
+
+Verifique:
+
+Cadastro
+
+Edição
+
+Exclusão
+
+Histórico
+
+Timeline
+
+Feed
+
+WhatsApp
+
+Ligação
+
+Registrar interação
+
+PWA
+
+Deploy
+
+Somente depois considere a Sprint concluída.
+
+Ao finalizar explique exatamente:
+
+1. Onde está localizada toda a inteligência do sistema.
+
+2. Qual arquivo devo alterar futuramente para trocar de IA.
+
+3. Como adicionar uma chave OpenAI.
+
+4. Como adicionar uma chave Claude.
+
+5. Como adicionar uma chave Gemini.
+
+6. Como adicionar uma chave Groq.
+
+Não implementar as APIs nesta Sprint.
+
+Apenas deixar toda a arquitetura pronta para receber qualquer uma delas.

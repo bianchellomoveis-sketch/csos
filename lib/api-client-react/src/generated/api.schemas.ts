@@ -83,6 +83,11 @@ export interface Client {
   nextAction: string;
   suggestedMessage: string;
   strategicReason: string;
+  strategy: string;
+  intelligentProfile: string;
+  urgency: string;
+  bestContactTime: string;
+  analysisContext: string[];
   /**
      * @minimum 0
      * @maximum 100
@@ -138,6 +143,15 @@ export interface Interaction {
   summary: string;
   objection: string;
   sentiment: Sentiment;
+  notes?: string;
+  temperatureSnapshot?: string;
+  stageSnapshot?: string;
+  proposalSent?: boolean;
+  evaluationDone?: boolean;
+  testDriveDone?: boolean;
+  messageSent?: string;
+  clientResponse?: string;
+  importantChanges?: string;
   createdAt: string;
 }
 
@@ -147,6 +161,13 @@ export interface InteractionInput {
   summary: string;
   objection?: string;
   sentiment: Sentiment;
+  notes?: string;
+  proposalSent?: boolean;
+  evaluationDone?: boolean;
+  testDriveDone?: boolean;
+  messageSent?: string;
+  clientResponse?: string;
+  importantChanges?: string;
 }
 
 export interface ClientsSummary {

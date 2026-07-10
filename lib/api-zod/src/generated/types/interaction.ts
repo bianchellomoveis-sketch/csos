@@ -15,5 +15,14 @@ export interface Interaction {
   summary: string;
   objection: string;
   sentiment: Sentiment;
+  notes?: string;
+  temperatureSnapshot?: string;
+  stageSnapshot?: string;
+  proposalSent?: boolean;
+  evaluationDone?: boolean;
+  testDriveDone?: boolean;
+  messageSent?: string;
+  clientResponse?: string;
+  importantChanges?: string;
   createdAt: Date;
 }

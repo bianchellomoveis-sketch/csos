@@ -1,0 +1,1 @@
+- [Feed CRM AI architecture](feed-crm-ai-architecture.md) — all client scoring/messaging goes through AIService.generateClientAnalysis; swap providers only in config.ts, never in routes/UI.

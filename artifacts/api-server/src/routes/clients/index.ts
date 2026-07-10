@@ -17,11 +17,24 @@ import {
   CreateClientInteractionParams,
   CreateClientInteractionBody,
 } from "@workspace/api-zod";
-import { computeAiFields, computePriorityScore, analyzeImportedText } from "../../lib/aiEngine";
+import { computePriorityScore, analyzeImportedText } from "../../lib/aiEngine";
+import { generateClientAnalysis } from "../../lib/ai/AIService";
 
 const router: IRouter = Router();
 
 type DbOrTx = Parameters<Parameters<typeof db.transaction>[0]>[0] | typeof db;
+
+/** analysisContext is stored as a JSON string in Postgres but exposed as an array over the API. */
+function serializeClient<T extends { analysisContext: string }>(client: T) {
+  let parsedContext: string[] = [];
+  try {
+    const parsed = JSON.parse(client.analysisContext);
+    if (Array.isArray(parsed)) parsedContext = parsed.filter((item): item is string => typeof item === "string");
+  } catch {
+    parsedContext = [];
+  }
+  return { ...client, analysisContext: parsedContext };
+}
 
 async function recalcAndSave(clientId: number, tx: DbOrTx = db) {
   const [client] = await tx.select().from(clientsTable).where(eq(clientsTable.id, clientId));
@@ -33,7 +46,7 @@ async function recalcAndSave(clientId: number, tx: DbOrTx = db) {
     .where(eq(interactionsTable.clientId, clientId))
     .orderBy(desc(interactionsTable.createdAt));
 
-  const ai = computeAiFields(client, interactions);
+  const ai = await generateClientAnalysis({ client, interactions });
   const priorityScore = computePriorityScore(ai.chancePurchase, ai.riskLoss, new Date(client.lastInteractionAt));
 
   const [updated] = await tx
@@ -42,10 +55,15 @@ async function recalcAndSave(clientId: number, tx: DbOrTx = db) {
       chancePurchase: ai.chancePurchase,
       riskLoss: ai.riskLoss,
       priority: ai.priority,
+      urgency: ai.urgency,
+      bestContactTime: ai.bestContactTime,
+      strategy: ai.strategy,
       nextAction: ai.nextAction,
+      intelligentProfile: ai.intelligentProfile,
       suggestedMessage: ai.suggestedMessage,
       strategicReason: ai.strategicReason,
       mainObjection: ai.mainObjection || client.mainObjection,
+      analysisContext: JSON.stringify(ai.analysisContext),
       priorityScore,
     })
     .where(eq(clientsTable.id, clientId))
@@ -70,7 +88,7 @@ router.get("/clients", async (req, res): Promise<void> => {
     .where(whereClause)
     .orderBy(desc(clientsTable.priorityScore));
 
-  res.json(clients);
+  res.json(clients.map(serializeClient));
 });
 
 router.post("/clients", async (req, res): Promise<void> => {
@@ -100,7 +118,7 @@ router.post("/clients", async (req, res): Promise<void> => {
     return (await recalcAndSave(created.id, tx)) ?? created;
   });
 
-  res.status(201).json(updated);
+  res.status(201).json(serializeClient(updated));
 });
 
 router.get("/clients/summary", async (_req, res): Promise<void> => {
@@ -138,7 +156,7 @@ router.get("/clients/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json(client);
+  res.json(serializeClient(client));
 });
 
 router.patch("/clients/:id", async (req, res): Promise<void> => {
@@ -168,7 +186,7 @@ router.patch("/clients/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json(updated);
+  res.json(serializeClient(updated));
 });
 
 router.delete("/clients/:id", async (req, res): Promise<void> => {
@@ -212,7 +230,7 @@ router.post("/clients/:id/mark-sold", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json(updated);
+  res.json(serializeClient(updated));
 });
 
 router.post("/clients/:id/mark-lost", async (req, res): Promise<void> => {
@@ -233,7 +251,7 @@ router.post("/clients/:id/mark-lost", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json(updated);
+  res.json(serializeClient(updated));
 });
 
 router.post("/clients/:id/regenerate-suggestion", async (req, res): Promise<void> => {
@@ -249,7 +267,7 @@ router.post("/clients/:id/regenerate-suggestion", async (req, res): Promise<void
     return;
   }
 
-  res.json(updated);
+  res.json(serializeClient(updated));
 });
 
 router.post("/clients/:id/import-history", async (req, res): Promise<void> => {
@@ -278,6 +296,8 @@ router.post("/clients/:id/import-history", async (req, res): Promise<void> => {
       summary: analysis.summary,
       objection: analysis.objection,
       sentiment: analysis.sentiment,
+      temperatureSnapshot: existing.temperature,
+      stageSnapshot: existing.stage,
     });
 
     await tx
@@ -297,7 +317,7 @@ router.post("/clients/:id/import-history", async (req, res): Promise<void> => {
     return;
   }
 
-  res.json(updated);
+  res.json(serializeClient(updated));
 });
 
 router.get("/clients/:id/interactions", async (req, res): Promise<void> => {
@@ -346,6 +366,16 @@ router.post("/clients/:id/interactions", async (req, res): Promise<void> => {
       summary: parsed.data.summary,
       objection: parsed.data.objection ?? "",
       sentiment: parsed.data.sentiment,
+      notes: parsed.data.notes ?? "",
+      proposalSent: parsed.data.proposalSent ?? false,
+      evaluationDone: parsed.data.evaluationDone ?? false,
+      testDriveDone: parsed.data.testDriveDone ?? false,
+      messageSent: parsed.data.messageSent ?? "",
+      clientResponse: parsed.data.clientResponse ?? "",
+      importantChanges: parsed.data.importantChanges ?? "",
+      // snapshots are captured automatically from current client state, never user-supplied
+      temperatureSnapshot: existing.temperature,
+      stageSnapshot: existing.stage,
     });
 
     await tx.update(clientsTable).set({ lastInteractionAt: now }).where(eq(clientsTable.id, params.data.id));
@@ -358,7 +388,7 @@ router.post("/clients/:id/interactions", async (req, res): Promise<void> => {
     return;
   }
 
-  res.status(201).json(updated);
+  res.status(201).json(serializeClient(updated));
 });
 
 export default router;

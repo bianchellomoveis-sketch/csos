@@ -1,8 +1,9 @@
-import { Client } from "@workspace/api-client-react";
+import { Client, useListClientInteractions, getListClientInteractionsQueryKey } from "@workspace/api-client-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Sparkles, Zap, StickyNote, Phone, Tag } from "lucide-react";
+import { AlertTriangle, Sparkles, Zap, StickyNote, Phone, Tag, UserCircle2, History, ListChecks, Clock, Target } from "lucide-react";
 import { getPriorityColor, getTemperatureColor } from "@/lib/format";
+import { ClientTimeline } from "./ClientTimeline";
 
 interface ClientDetailsSheetProps {
   open: boolean;
@@ -11,6 +12,10 @@ interface ClientDetailsSheetProps {
 }
 
 export function ClientDetailsSheet({ open, onOpenChange, client }: ClientDetailsSheetProps) {
+  const { data: interactions } = useListClientInteractions(client?.id ?? 0, {
+    query: { enabled: open && !!client, queryKey: getListClientInteractionsQueryKey(client?.id ?? 0) },
+  });
+
   if (!client) return null;
 
   return (
@@ -69,12 +74,61 @@ export function ClientDetailsSheet({ open, onOpenChange, client }: ClientDetails
             </div>
           )}
 
+          {client.intelligentProfile && (
+            <div className="bg-card border border-card-border rounded-xl p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                <UserCircle2 className="h-4 w-4" /> Perfil Inteligente
+              </p>
+              <p className="text-sm text-foreground/90 whitespace-pre-wrap">{client.intelligentProfile}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-3">
+            {client.strategy && (
+              <div className="bg-card border border-card-border rounded-xl p-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
+                  <Target className="h-3.5 w-3.5" /> Estratégia
+                </p>
+                <p className="text-sm font-medium text-foreground">{client.strategy}</p>
+              </div>
+            )}
+            {client.bestContactTime && (
+              <div className="bg-card border border-card-border rounded-xl p-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1">
+                  <Clock className="h-3.5 w-3.5" /> Melhor momento
+                </p>
+                <p className="text-sm font-medium text-foreground">{client.bestContactTime}</p>
+              </div>
+            )}
+          </div>
+
+          {client.urgency && (
+            <Badge variant="outline" className="capitalize font-semibold">
+              Urgência: {client.urgency}
+            </Badge>
+          )}
+
           {client.strategicReason && (
             <div className="bg-primary/5 border border-primary/10 rounded-xl p-4">
               <p className="text-xs font-bold uppercase tracking-wider text-primary mb-1.5 flex items-center gap-1.5">
                 <Sparkles className="h-4 w-4" /> Por que o Assistente Inteligente sugere isso
               </p>
               <p className="text-sm text-foreground/90">{client.strategicReason}</p>
+            </div>
+          )}
+
+          {client.analysisContext && client.analysisContext.length > 0 && (
+            <div className="bg-card border border-card-border rounded-xl p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                <ListChecks className="h-4 w-4" /> Como cheguei nessa conclusão
+              </p>
+              <ul className="space-y-1">
+                {client.analysisContext.map((item, idx) => (
+                  <li key={idx} className="text-sm text-foreground/85 flex gap-2">
+                    <span className="text-primary">•</span> {item}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 
@@ -86,6 +140,13 @@ export function ClientDetailsSheet({ open, onOpenChange, client }: ClientDetails
               <p className="text-sm text-foreground/90 italic whitespace-pre-wrap">"{client.suggestedMessage}"</p>
             </div>
           )}
+
+          <div className="bg-card border border-card-border rounded-xl p-4">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
+              <History className="h-4 w-4" /> Linha do Tempo
+            </p>
+            <ClientTimeline client={client} interactions={interactions} />
+          </div>
         </div>
       </SheetContent>
     </Sheet>

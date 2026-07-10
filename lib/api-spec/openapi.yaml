@@ -330,6 +330,11 @@ components:
         - nextAction
         - suggestedMessage
         - strategicReason
+        - strategy
+        - intelligentProfile
+        - urgency
+        - bestContactTime
+        - analysisContext
         - chancePurchase
         - riskLoss
         - priority
@@ -353,6 +358,13 @@ components:
         nextAction: { type: string }
         suggestedMessage: { type: string }
         strategicReason: { type: string }
+        strategy: { type: string }
+        intelligentProfile: { type: string }
+        urgency: { type: string }
+        bestContactTime: { type: string }
+        analysisContext:
+          type: array
+          items: { type: string }
         chancePurchase: { type: integer, minimum: 0, maximum: 100 }
         riskLoss: { type: integer, minimum: 0, maximum: 100 }
         priority:
@@ -424,6 +436,15 @@ components:
         objection: { type: string }
         sentiment:
           $ref: "#/components/schemas/Sentiment"
+        notes: { type: string }
+        temperatureSnapshot: { type: string }
+        stageSnapshot: { type: string }
+        proposalSent: { type: boolean }
+        evaluationDone: { type: boolean }
+        testDriveDone: { type: boolean }
+        messageSent: { type: string }
+        clientResponse: { type: string }
+        importantChanges: { type: string }
         createdAt:
           type: string
           format: date-time
@@ -438,6 +459,13 @@ components:
         objection: { type: string }
         sentiment:
           $ref: "#/components/schemas/Sentiment"
+        notes: { type: string }
+        proposalSent: { type: boolean }
+        evaluationDone: { type: boolean }
+        testDriveDone: { type: boolean }
+        messageSent: { type: string }
+        clientResponse: { type: string }
+        importantChanges: { type: string }
 
     ClientsSummary:
       type: object

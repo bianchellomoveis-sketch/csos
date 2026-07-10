@@ -14,4 +14,11 @@ export interface InteractionInput {
   summary: string;
   objection?: string;
   sentiment: Sentiment;
+  notes?: string;
+  proposalSent?: boolean;
+  evaluationDone?: boolean;
+  testDriveDone?: boolean;
+  messageSent?: string;
+  clientResponse?: string;
+  importantChanges?: string;
 }
