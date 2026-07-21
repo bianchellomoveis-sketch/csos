@@ -6,6 +6,7 @@ import { OpenAIProvider } from "./providers/OpenAIProvider";
 import { ClaudeProvider } from "./providers/ClaudeProvider";
 import { GeminiProvider } from "./providers/GeminiProvider";
 import { GroqProvider } from "./providers/GroqProvider";
+import { SalesBrainCore } from "./SalesBrainCore";
 
 const localProvider = new LocalAIProvider();
 
@@ -31,15 +32,12 @@ function resolveProvider(): AIProvider {
  * this function -- never a provider directly. Swapping the AI backend later
  * is done exclusively in config.ts / providers, never here.
  */
-export async function generateClientAnalysis(input: ClientAnalysisInput): Promise<ClientAnalysisResult> {
-  const provider = resolveProvider();
-  try {
-    return await provider.generateClientAnalysis(input);
-  } catch (err) {
-    if (provider !== localProvider) {
-      console.warn("[AIService] Provider configurado falhou ou não está implementado, usando LocalAIProvider como fallback.", err);
-      return localProvider.generateClientAnalysis(input);
-    }
-    throw err;
-  }
+export async function generateClientAnalysis(
+  input: ClientAnalysisInput,
+): Promise<ClientAnalysisResult> {
+  const primaryProvider = resolveProvider();
+
+  const salesBrainCore = new SalesBrainCore(primaryProvider, localProvider);
+
+  return salesBrainCore.analyzeClient(input);
 }

@@ -29,7 +29,10 @@ function serializeClient<T extends { analysisContext: string }>(client: T) {
   let parsedContext: string[] = [];
   try {
     const parsed = JSON.parse(client.analysisContext);
-    if (Array.isArray(parsed)) parsedContext = parsed.filter((item): item is string => typeof item === "string");
+    if (Array.isArray(parsed))
+      parsedContext = parsed.filter(
+        (item): item is string => typeof item === "string",
+      );
   } catch {
     parsedContext = [];
   }
@@ -37,7 +40,10 @@ function serializeClient<T extends { analysisContext: string }>(client: T) {
 }
 
 async function recalcAndSave(clientId: number, tx: DbOrTx = db) {
-  const [client] = await tx.select().from(clientsTable).where(eq(clientsTable.id, clientId));
+  const [client] = await tx
+    .select()
+    .from(clientsTable)
+    .where(eq(clientsTable.id, clientId));
   if (!client) return undefined;
 
   const interactions = await tx
@@ -47,7 +53,18 @@ async function recalcAndSave(clientId: number, tx: DbOrTx = db) {
     .orderBy(desc(interactionsTable.createdAt));
 
   const ai = await generateClientAnalysis({ client, interactions });
-  const priorityScore = computePriorityScore(ai.chancePurchase, ai.riskLoss, new Date(client.lastInteractionAt));
+  console.log(`[AI] generated result client=${clientId}:`, {
+    chancePurchase: ai.chancePurchase,
+    riskLoss: ai.riskLoss,
+    priority: ai.priority,
+    urgency: ai.urgency,
+    hasNextAction: Boolean(ai.nextAction),
+  });
+  const priorityScore = computePriorityScore(
+    ai.chancePurchase,
+    ai.riskLoss,
+    new Date(client.lastInteractionAt),
+  );
 
   const [updated] = await tx
     .update(clientsTable)
@@ -69,6 +86,14 @@ async function recalcAndSave(clientId: number, tx: DbOrTx = db) {
     .where(eq(clientsTable.id, clientId))
     .returning();
 
+  console.log(`[AI] persisted result client=${clientId}:`, {
+    chancePurchase: updated.chancePurchase,
+    riskLoss: updated.riskLoss,
+    priority: updated.priority,
+    urgency: updated.urgency,
+    hasNextAction: Boolean(updated.nextAction),
+  });
+
   return updated;
 }
 
@@ -80,7 +105,8 @@ router.get("/clients", async (req, res): Promise<void> => {
   }
 
   const status = query.data.status;
-  const whereClause = status && status !== "todos" ? eq(clientsTable.status, status) : undefined;
+  const whereClause =
+    status && status !== "todos" ? eq(clientsTable.status, status) : undefined;
 
   const clients = await db
     .select()
@@ -150,7 +176,10 @@ router.get("/clients/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  const [client] = await db.select().from(clientsTable).where(eq(clientsTable.id, params.data.id));
+  const [client] = await db
+    .select()
+    .from(clientsTable)
+    .where(eq(clientsTable.id, params.data.id));
   if (!client) {
     res.status(404).json({ error: "Client not found" });
     return;
@@ -173,10 +202,16 @@ router.patch("/clients/:id", async (req, res): Promise<void> => {
   }
 
   const updated = await db.transaction(async (tx) => {
-    const [existing] = await tx.select().from(clientsTable).where(eq(clientsTable.id, params.data.id));
+    const [existing] = await tx
+      .select()
+      .from(clientsTable)
+      .where(eq(clientsTable.id, params.data.id));
     if (!existing) return undefined;
 
-    await tx.update(clientsTable).set(parsed.data).where(eq(clientsTable.id, params.data.id));
+    await tx
+      .update(clientsTable)
+      .set(parsed.data)
+      .where(eq(clientsTable.id, params.data.id));
 
     return recalcAndSave(params.data.id, tx);
   });
@@ -197,10 +232,15 @@ router.delete("/clients/:id", async (req, res): Promise<void> => {
   }
 
   const deleted = await db.transaction(async (tx) => {
-    const [removed] = await tx.delete(clientsTable).where(eq(clientsTable.id, params.data.id)).returning();
+    const [removed] = await tx
+      .delete(clientsTable)
+      .where(eq(clientsTable.id, params.data.id))
+      .returning();
     if (!removed) return undefined;
 
-    await tx.delete(interactionsTable).where(eq(interactionsTable.clientId, params.data.id));
+    await tx
+      .delete(interactionsTable)
+      .where(eq(interactionsTable.clientId, params.data.id));
     return removed;
   });
 
@@ -254,21 +294,24 @@ router.post("/clients/:id/mark-lost", async (req, res): Promise<void> => {
   res.json(serializeClient(updated));
 });
 
-router.post("/clients/:id/regenerate-suggestion", async (req, res): Promise<void> => {
-  const params = RegenerateSuggestionParams.safeParse(req.params);
-  if (!params.success) {
-    res.status(400).json({ error: params.error.message });
-    return;
-  }
+router.post(
+  "/clients/:id/regenerate-suggestion",
+  async (req, res): Promise<void> => {
+    const params = RegenerateSuggestionParams.safeParse(req.params);
+    if (!params.success) {
+      res.status(400).json({ error: params.error.message });
+      return;
+    }
 
-  const updated = await recalcAndSave(params.data.id);
-  if (!updated) {
-    res.status(404).json({ error: "Client not found" });
-    return;
-  }
+    const updated = await recalcAndSave(params.data.id);
+    if (!updated) {
+      res.status(404).json({ error: "Client not found" });
+      return;
+    }
 
-  res.json(serializeClient(updated));
-});
+    res.json(serializeClient(updated));
+  },
+);
 
 router.post("/clients/:id/import-history", async (req, res): Promise<void> => {
   const params = ImportClientHistoryParams.safeParse(req.params);
@@ -284,7 +327,10 @@ router.post("/clients/:id/import-history", async (req, res): Promise<void> => {
   }
 
   const updated = await db.transaction(async (tx) => {
-    const [existing] = await tx.select().from(clientsTable).where(eq(clientsTable.id, params.data.id));
+    const [existing] = await tx
+      .select()
+      .from(clientsTable)
+      .where(eq(clientsTable.id, params.data.id));
     if (!existing) return undefined;
 
     const analysis = analyzeImportedText(parsed.data.text);
@@ -327,7 +373,10 @@ router.get("/clients/:id/interactions", async (req, res): Promise<void> => {
     return;
   }
 
-  const [client] = await db.select().from(clientsTable).where(eq(clientsTable.id, params.data.id));
+  const [client] = await db
+    .select()
+    .from(clientsTable)
+    .where(eq(clientsTable.id, params.data.id));
   if (!client) {
     res.status(404).json({ error: "Client not found" });
     return;
@@ -356,7 +405,10 @@ router.post("/clients/:id/interactions", async (req, res): Promise<void> => {
   }
 
   const updated = await db.transaction(async (tx) => {
-    const [existing] = await tx.select().from(clientsTable).where(eq(clientsTable.id, params.data.id));
+    const [existing] = await tx
+      .select()
+      .from(clientsTable)
+      .where(eq(clientsTable.id, params.data.id));
     if (!existing) return undefined;
 
     const now = new Date();
@@ -378,7 +430,10 @@ router.post("/clients/:id/interactions", async (req, res): Promise<void> => {
       stageSnapshot: existing.stage,
     });
 
-    await tx.update(clientsTable).set({ lastInteractionAt: now }).where(eq(clientsTable.id, params.data.id));
+    await tx
+      .update(clientsTable)
+      .set({ lastInteractionAt: now })
+      .where(eq(clientsTable.id, params.data.id));
 
     return recalcAndSave(params.data.id, tx);
   });

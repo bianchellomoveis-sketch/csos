@@ -11,6 +11,32 @@ export function daysSince(date: Date): number {
   return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
 }
 
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function combinedText(i: Interaction): string {
+  return [i.summary, i.notes, i.messageSent, i.clientResponse, i.objection].filter(Boolean).join(" ");
+}
+
+/** Detects a spoken/written intent to schedule a test drive that hasn't happened yet. */
+function detectsTestDriveIntent(ordered: Interaction[]): boolean {
+  return ordered.some((i) => {
+    if (i.testDriveDone || i.type === "test_drive") return false;
+    const t = normalize(combinedText(i));
+    return t.includes("test drive") || t.includes("test-drive") || t.includes("testdrive");
+  });
+}
+
+/** Detects an objection where the client needs to see/know the vehicle before deciding. */
+function isKnowVehicleFirstObjection(objection: string): boolean {
+  const t = normalize(objection);
+  return (t.includes("conhecer") || t.includes("ver o carro") || t.includes("ver o veiculo")) && (t.includes("decidir") || t.includes("decisao") || t.includes("antes"));
+}
+
 function objectionMessage(objection: string, firstName: string, product: string, recentSummaries: string[]): string {
   const normalized = objection.toLowerCase();
   const alreadySaid = (msg: string) => recentSummaries.some((s) => s.toLowerCase().includes(msg.toLowerCase().slice(0, 20)));
@@ -40,6 +66,24 @@ function objectionMessage(objection: string, firstName: string, product: string,
 
   const fresh = variants.find((v) => !alreadySaid(v)) ?? variants[variants.length - 1];
   return fresh;
+}
+
+/** Message prioritized when the client expressed intent to schedule a test drive. */
+function testDriveIntentMessage(firstName: string, product: string, objection: string, recentSummaries: string[]): string {
+  const alreadySaid = (msg: string) => recentSummaries.some((s) => s.toLowerCase().includes(msg.toLowerCase().slice(0, 20)));
+  const mentionsKnowFirst = isKnowVehicleFirstObjection(objection);
+
+  const variants = mentionsKnowFirst
+    ? [
+        `Oi ${firstName}! Já que você quer conhecer o ${product} antes de decidir, bora agendar um test drive? Assim você sente o carro na prática antes de fechar.`,
+        `${firstName}, faz todo sentido conhecer o ${product} de perto antes de decidir. Posso agendar seu test drive -- qual dia fica melhor pra você?`,
+      ]
+    : [
+        `Oi ${firstName}! Vi que você quer marcar um test drive do ${product}. Vamos agendar? Me diga o melhor dia e horário.`,
+        `${firstName}, bora agendar aquele test drive do ${product} que você comentou? Só me confirma um horário que já reservo pra você.`,
+      ];
+
+  return variants.find((v) => !alreadySaid(v)) ?? variants[variants.length - 1];
 }
 
 /**
@@ -89,6 +133,9 @@ export class LocalAIProvider implements AIProvider {
     const hasProposal = stage.includes("proposta") || ordered.some((i) => i.type === "proposta" || i.proposalSent);
     const hasAvaliacao = stage.includes("avaliação") || stage.includes("avaliacao") || ordered.some((i) => i.type === "avaliacao" || i.evaluationDone);
     const isSumido = stage.includes("sumido");
+    const testDriveCompleted = ordered.some((i) => i.type === "test_drive" || i.testDriveDone);
+    const wantsTestDrive = !testDriveCompleted && detectsTestDriveIntent(ordered);
+    const knowsVehicleFirst = isKnowVehicleFirstObjection(objection);
 
     let chance = 50;
     let risk = 30;
@@ -103,9 +150,11 @@ export class LocalAIProvider implements AIProvider {
 
     reasons.push(days === 0 ? "Contato feito hoje" : `${days} dia(s) sem contato`);
     if (hasTestDrive) reasons.push("Test Drive realizado");
+    if (wantsTestDrive) reasons.push("Cliente demonstrou interesse em agendar test drive");
     if (hasProposal) reasons.push("Proposta enviada");
     if (hasAvaliacao) reasons.push("Avaliação do usado entregue");
     if (objection) reasons.push(`Objeção principal: ${objection}`);
+    if (knowsVehicleFirst) reasons.push("Cliente quer conhecer o veículo antes de decidir");
     reasons.push(`Sentimento ${overallSentiment}`);
     if (respondsQuickly) reasons.push("Costuma responder rapidamente");
     if (avgGapDays !== null && !respondsQuickly) reasons.push("Costuma demorar para responder");
@@ -124,6 +173,11 @@ export class LocalAIProvider implements AIProvider {
     if (isSumido) {
       risk += 15;
       chance -= 10;
+    }
+    if (wantsTestDrive) {
+      // Actively asking to schedule a test drive is a strong buying signal.
+      chance += 20;
+      risk -= 15;
     }
 
     if (overallSentiment === "positivo") {
@@ -173,26 +227,34 @@ export class LocalAIProvider implements AIProvider {
         ? "O quanto antes -- cliente já está distante do contato, priorizar hoje"
         : "Período comercial (10h-18h), horário em que o cliente costuma interagir";
 
-    const strategy = isSumido
-      ? "Reativação direta: ligação + mensagem objetiva citando o último assunto tratado"
-      : hasProposal
-        ? "Follow-up consultivo da proposta, reforçando benefícios e criando senso de oportunidade"
-        : hasTestDrive
-          ? "Fechamento pós test-drive: entender objeções remanescentes e apresentar condição final"
-          : "Aquecimento gradual: manter cadência de contato e aprofundar entendimento das necessidades";
+    const strategy = wantsTestDrive
+      ? knowsVehicleFirst
+        ? "Agendar test drive imediatamente: cliente quer conhecer o veículo antes de decidir -- usar a experiência para eliminar a objeção"
+        : "Agendar test drive imediatamente para converter o interesse demonstrado em decisão de compra"
+      : isSumido
+        ? "Reativação direta: ligação + mensagem objetiva citando o último assunto tratado"
+        : hasProposal
+          ? "Follow-up consultivo da proposta, reforçando benefícios e criando senso de oportunidade"
+          : hasTestDrive
+            ? "Fechamento pós test-drive: entender objeções remanescentes e apresentar condição final"
+            : "Aquecimento gradual: manter cadência de contato e aprofundar entendimento das necessidades";
 
-    const nextAction = isSumido
-      ? "Ligar agora para reativar o contato antes de perder o cliente"
-      : hasProposal
-        ? "Fazer follow-up da proposta enviada e reforçar benefícios"
-        : hasTestDrive
-          ? "Ligar para saber a decisão após o test drive"
-          : days === 0
-            ? "Manter o ritmo: enviar próxima informação combinada"
-            : "Enviar mensagem de reengajamento pelo WhatsApp";
+    const nextAction = wantsTestDrive
+      ? "Agendar o test drive o quanto antes"
+      : isSumido
+        ? "Ligar agora para reativar o contato antes de perder o cliente"
+        : hasProposal
+          ? "Fazer follow-up da proposta enviada e reforçar benefícios"
+          : hasTestDrive
+            ? "Ligar para saber a decisão após o test drive"
+            : days === 0
+              ? "Manter o ritmo: enviar próxima informação combinada"
+              : "Enviar mensagem de reengajamento pelo WhatsApp";
 
     const recentSummaries = ordered.slice(0, 5).map((i) => i.messageSent || i.summary || "");
-    const suggestedMessage = objectionMessage(objection, firstName, client.product || "veículo", recentSummaries);
+    const suggestedMessage = wantsTestDrive
+      ? testDriveIntentMessage(firstName, client.product || "veículo", objection, recentSummaries)
+      : objectionMessage(objection, firstName, client.product || "veículo", recentSummaries);
 
     const strategicReason = reasons.length > 0 ? reasons.join("; ") : "Cliente em acompanhamento padrão, sem sinais fortes de risco ou oportunidade.";
 
@@ -203,6 +265,8 @@ export class LocalAIProvider implements AIProvider {
       hasAvaliacao,
       objection,
       respondsQuickly,
+      hasEnoughDataForResponsePattern: avgGapDays !== null,
+      wantsTestDrive,
       days,
       ordered,
       overallSentiment,
@@ -232,11 +296,25 @@ function buildIntelligentProfile(args: {
   hasAvaliacao: boolean;
   objection: string;
   respondsQuickly: boolean;
+  hasEnoughDataForResponsePattern: boolean;
+  wantsTestDrive: boolean;
   days: number;
   ordered: Interaction[];
   overallSentiment: string;
 }): string {
-  const { firstName, hasTestDrive, hasProposal, hasAvaliacao, objection, respondsQuickly, days, ordered, overallSentiment } = args;
+  const {
+    firstName,
+    hasTestDrive,
+    hasProposal,
+    hasAvaliacao,
+    objection,
+    respondsQuickly,
+    hasEnoughDataForResponsePattern,
+    wantsTestDrive,
+    days,
+    ordered,
+    overallSentiment,
+  } = args;
   const sentences: string[] = [];
 
   if (ordered.length === 0) {
@@ -252,10 +330,14 @@ function buildIntelligentProfile(args: {
   );
 
   if (hasTestDrive) sentences.push("Já realizou test drive.");
+  if (wantsTestDrive) sentences.push("Demonstrou interesse em agendar um test drive.");
   if (hasAvaliacao) sentences.push("Recebeu avaliação do veículo usado.");
   if (hasProposal) sentences.push("Já recebeu proposta comercial.");
   if (objection) sentences.push(`Principal objeção continua sendo ${objection.toLowerCase()}.`);
-  sentences.push(respondsQuickly ? "Costuma responder rapidamente aos contatos." : "Costuma demorar para responder aos contatos.");
+  // Only claim a response-speed pattern once there's more than one interaction to compare -- otherwise it's fabricated.
+  if (hasEnoughDataForResponsePattern) {
+    sentences.push(respondsQuickly ? "Costuma responder rapidamente aos contatos." : "Costuma demorar para responder aos contatos.");
+  }
   if (days >= 5) sentences.push(`Está há ${days} dias sem interação -- atenção redobrada.`);
 
   return sentences.join(" ");
