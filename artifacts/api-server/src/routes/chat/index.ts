@@ -7,8 +7,11 @@ import {
   conversationsTable,
   messagesTable,
 } from "@workspace/db";
+import { WAHAService } from "../../lib/waha/WAHAService";
 
 const router: IRouter = Router();
+
+const wahaService = new WAHAService();
 
 router.get("/chat/health", (_req, res) => {
   res.json({
@@ -170,45 +173,84 @@ router.post(
 
     const now = new Date();
 
-    const createdMessage = await db.transaction(async (tx) => {
-      const [message] = await tx
-        .insert(messagesTable)
-        .values({
-          conversationId,
-          externalMessageId:
-            typeof body.externalMessageId === "string" &&
-            body.externalMessageId.trim()
-              ? body.externalMessageId.trim()
-              : `manual-${randomUUID()}`,
-          direction,
-          type,
-          content,
-          mediaUrl:
-            typeof body.mediaUrl === "string"
-              ? body.mediaUrl.trim()
-              : "",
-          status:
-            typeof body.status === "string" &&
-            body.status.trim()
-              ? body.status.trim()
-              : direction === "outbound"
-                ? "pending"
-                : "received",
-          sentAt: now,
-        })
-        .returning();
+let externalMessageId =
+  typeof body.externalMessageId === "string" &&
+  body.externalMessageId.trim()
+    ? body.externalMessageId.trim()
+    : `manual-${randomUUID()}`;
 
-      await tx
-        .update(conversationsTable)
-        .set({
-          lastMessageAt: now,
-        })
-        .where(eq(conversationsTable.id, conversationId));
+let messageStatus =
+  typeof body.status === "string" && body.status.trim()
+    ? body.status.trim()
+    : direction === "outbound"
+      ? "pending"
+      : "received";
 
-      return message;
+if (direction === "outbound" && process.env.WAHA_BASE_URL) {
+  const [client] = await db
+    .select()
+    .from(clientsTable)
+    .where(eq(clientsTable.id, conversation.clientId));
+
+  if (!client) {
+    res.status(404).json({
+      error: "Client not found",
+    });
+    return;
+  }
+
+  try {
+    const wahaResponse = await wahaService.sendText({
+      phone: client.phone,
+      text: content,
     });
 
-    res.status(201).json(createdMessage);
+    externalMessageId =
+      typeof wahaResponse.id === "string" && wahaResponse.id
+        ? wahaResponse.id
+        : `waha-${randomUUID()}`;
+
+    messageStatus = "sent";
+  } catch (error) {
+    res.status(502).json({
+      error:
+        error instanceof Error
+          ? error.message
+          : "WAHA message sending failed",
+    });
+    return;
+  }
+}
+
+const createdMessage = await db.transaction(async (tx) => {
+  const [message] = await tx
+    .insert(messagesTable)
+    .values({
+      conversationId,
+      externalMessageId,
+      direction,
+      type,
+      content,
+      mediaUrl:
+        typeof body.mediaUrl === "string"
+          ? body.mediaUrl.trim()
+          : "",
+      status: messageStatus,
+      sentAt: now,
+    })
+    .returning();
+
+  await tx
+    .update(conversationsTable)
+    .set({
+      lastMessageAt: now,
+    })
+    .where(eq(conversationsTable.id, conversationId));
+
+  return message;
+});
+
+res.status(201).json(createdMessage);
   },
 );
 export default router;
